@@ -68,6 +68,10 @@ class LocalGitProvider(GitProvider):
             create_patch=True,
             R=True
         )
+
+        diffs = [diff_item for diff_item in diffs if diff_item.b_path != 'bun.lockb']
+        diffs = [diff_item for diff_item in diffs if diff_item.b_path is None or 'generated' not in diff_item.b_path]
+
         diff_files = []
         for diff_item in diffs:
             if diff_item.a_blob is not None:
@@ -130,7 +134,25 @@ class LocalGitProvider(GitProvider):
         raise NotImplementedError('Publishing code suggestions is not implemented for the local git provider')
 
     def publish_code_suggestions(self, code_suggestions: list) -> bool:
-        raise NotImplementedError('Publishing code suggestions is not implemented for the local git provider')
+        """
+        Publishes code suggestions as comments on the PR.
+        """
+        try:
+            with open(self.review_path, "w") as file:
+                for suggestion in code_suggestions:
+                    # Formatando a sugestão para ser mais legível
+                    formatted_suggestion = (
+                        f"File: {suggestion['relevant_file']}\n"
+                        f"Start Line: {suggestion['relevant_lines_start']}, End Line: {suggestion['relevant_lines_end']}\n"
+                        f"Suggestion:\n{suggestion['body']}\n\n"
+                    )
+                    print(formatted_suggestion)
+                    file.write(formatted_suggestion)
+            return True
+        except Exception as e:
+            if get_settings().config.verbosity_level >= 2:
+                get_logger().error(f"Failed to publish code suggestion, error: {e}")
+            return False
 
     def publish_labels(self, labels):
         pass  # Not applicable to the local git provider, but required by the interface
@@ -178,3 +200,23 @@ class LocalGitProvider(GitProvider):
 
     def get_pr_labels(self, update=False):
         raise NotImplementedError('Getting labels is not implemented for the local git provider')
+
+    def add_eyes_reaction(self, issue_comment_id: int):
+        raise NotImplementedError(
+            'Adding reactions is not implemented for the gerrit provider')
+
+    def remove_reaction(self, issue_comment_id: int, reaction_id: int):
+        raise NotImplementedError(
+            'Removing reactions is not implemented for the gerrit provider')
+
+    def get_commit_messages(self):
+        return [self.repo.head.commit.message]
+
+    def get_repo_settings(self):
+        try:
+            with open(self.repo_path / ".pr_agent.toml", 'rb') as f:
+                contents = f.read()
+            return contents
+        except OSError:
+            return b""
+
