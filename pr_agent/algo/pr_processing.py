@@ -146,6 +146,9 @@ def pr_generate_extended_diff(pr_languages: list,
 
             # extend each patch with extra lines of context
             extended_patch = extend_patch(original_file_content_str, patch, num_lines=patch_extra_lines)
+            if not extended_patch:
+                get_logger().warning(f"Failed to extend patch for file: {file.filename}")
+                continue
             full_extended_patch = f"\n\n## {file.filename}\n\n{extended_patch}\n"
 
             if add_line_numbers_to_hunks:
@@ -374,9 +377,25 @@ def get_pr_multi_diffs(git_provider: GitProvider,
         patch = convert_to_hunks_with_lines_numbers(patch, file)
         new_patch_tokens = token_handler.count_tokens(patch)
 
-        if patch and (token_handler.prompt_tokens + new_patch_tokens) > get_max_tokens(model) - OUTPUT_BUFFER_TOKENS_SOFT_THRESHOLD:
-            get_logger().warning(f"Patch too large, skipping: {file.filename}")
-            continue
+        if patch and (token_handler.prompt_tokens + new_patch_tokens) > get_max_tokens(
+                model) - OUTPUT_BUFFER_TOKENS_SOFT_THRESHOLD:
+            if get_settings().config.get('large_patch_policy', 'skip') == 'skip':
+                get_logger().warning(f"Patch too large, skipping: {file.filename}")
+                continue
+            elif get_settings().config.get('large_patch_policy') == 'clip':
+                delta_tokens = get_max_tokens(model) - OUTPUT_BUFFER_TOKENS_SOFT_THRESHOLD - token_handler.prompt_tokens
+                patch_clipped = clip_tokens(patch, delta_tokens, delete_last_line=True, num_input_tokens=new_patch_tokens)
+                new_patch_tokens = token_handler.count_tokens(patch_clipped)
+                if patch_clipped and (token_handler.prompt_tokens + new_patch_tokens) > get_max_tokens(
+                        model) - OUTPUT_BUFFER_TOKENS_SOFT_THRESHOLD:
+                    get_logger().warning(f"Patch too large, skipping: {file.filename}")
+                    continue
+                else:
+                    get_logger().info(f"Clipped large patch for file: {file.filename}")
+                    patch = patch_clipped
+            else:
+                get_logger().warning(f"Patch too large, skipping: {file.filename}")
+                continue
 
         if patch and (total_tokens + new_patch_tokens > get_max_tokens(model) - OUTPUT_BUFFER_TOKENS_SOFT_THRESHOLD):
             final_diff = "\n".join(patches)

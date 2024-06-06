@@ -9,7 +9,7 @@ from pr_agent.algo.ai_handlers.base_ai_handler import BaseAiHandler
 from pr_agent.algo.ai_handlers.litellm_ai_handler import LiteLLMAIHandler
 from pr_agent.algo.pr_processing import get_pr_diff, retry_with_fallback_models
 from pr_agent.algo.token_handler import TokenHandler
-from pr_agent.algo.utils import load_yaml, set_custom_labels, get_user_labels, ModelType
+from pr_agent.algo.utils import load_yaml, set_custom_labels, get_user_labels, ModelType, show_relevant_configurations
 from pr_agent.config_loader import get_settings
 from pr_agent.git_providers import get_git_provider
 from pr_agent.git_providers.git_provider import get_main_pr_language
@@ -43,7 +43,6 @@ class PRDescription:
         self.ai_handler = ai_handler()
         self.ai_handler.main_pr_language = self.main_pr_language
 
-    
         # Initialize the variables dictionary
         self.vars = {
             "title": self.git_provider.pr.title,
@@ -82,7 +81,7 @@ class PRDescription:
             if get_settings().config.publish_output:
                 self.git_provider.publish_comment("Preparing PR description...", is_temporary=True)
 
-            await retry_with_fallback_models(self._prepare_prediction, ModelType.TURBO) # turbo model because larger context
+            await retry_with_fallback_models(self._prepare_prediction, ModelType.TURBO)
 
             if self.prediction:
                 self._prepare_data()
@@ -115,6 +114,10 @@ class PRDescription:
             elif get_settings().pr_description.enable_help_comment:
                 pr_body += "\n\n___\n\n> 💡 **PR-Agent usage**:"
                 pr_body += "\n>Comment `/help` on the PR to get a list of all available PR-Agent tools and their descriptions\n\n"
+
+            # Output the relevant configurations if enabled
+            if get_settings().get('config', {}).get('output_relevant_configurations', False):
+                pr_body += show_relevant_configurations(relevant_section='pr_description')
 
             if get_settings().config.publish_output:
                 # publish labels
@@ -153,7 +156,7 @@ class PRDescription:
                 self.git_provider.remove_initial_comment()
         except Exception as e:
             get_logger().error(f"Error generating PR description {self.pr_id}: {e}")
-        
+
         return ""
 
     async def _prepare_prediction(self, model: str) -> None:
@@ -216,9 +219,6 @@ class PRDescription:
             self.data['description'] = self.data.pop('description')
         if 'pr_files' in self.data:
             self.data['pr_files'] = self.data.pop('pr_files')
-
-
-
 
     def _prepare_labels(self) -> List[str]:
         pr_types = []
@@ -317,7 +317,7 @@ class PRDescription:
                 value = self.file_label_dict
             else:
                 key_publish = key.rstrip(':').replace("_", " ").capitalize()
-                if key_publish== "Type":
+                if key_publish == "Type":
                     key_publish = "PR Type"
                 # elif key_publish == "Description":
                 #     key_publish = "PR Description"
@@ -507,6 +507,7 @@ def insert_br_after_x_chars(text, x=70):
         if "</code>" in word:
             is_inside_code = False
     return ''.join(new_text).strip()
+
 
 def replace_code_tags(text):
     """

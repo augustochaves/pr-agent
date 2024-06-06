@@ -8,7 +8,8 @@ from pr_agent.algo.ai_handlers.base_ai_handler import BaseAiHandler
 from pr_agent.algo.ai_handlers.litellm_ai_handler import LiteLLMAIHandler
 from pr_agent.algo.pr_processing import get_pr_diff, retry_with_fallback_models
 from pr_agent.algo.token_handler import TokenHandler
-from pr_agent.algo.utils import convert_to_markdown, github_action_output, load_yaml, ModelType
+from pr_agent.algo.utils import convert_to_markdown, github_action_output, load_yaml, ModelType, \
+    show_relevant_configurations
 from pr_agent.config_loader import get_settings
 from pr_agent.git_providers import get_git_provider
 from pr_agent.git_providers.git_provider import IncrementalPR, get_main_pr_language
@@ -20,6 +21,7 @@ class PRReviewer:
     """
     The PRReviewer class is responsible for reviewing a pull request and generating feedback using an AI model.
     """
+
     def __init__(self, pr_url: str, is_answer: bool = False, is_auto: bool = False, args: list = None,
                  ai_handler: partial[BaseAiHandler,] = LiteLLMAIHandler):
         """
@@ -33,7 +35,7 @@ class PRReviewer:
             args (list, optional): List of arguments passed to the PRReviewer class. Defaults to None.
         """
         self.args = args
-        self.parse_args(args) # -i command
+        self.parse_args(args)  # -i command
 
         self.git_provider = get_git_provider()(pr_url, incremental=self.incremental)
         self.main_language = get_main_pr_language(
@@ -63,6 +65,7 @@ class PRReviewer:
             "require_tests": get_settings().pr_reviewer.require_tests_review,
             "require_estimate_effort_to_review": get_settings().pr_reviewer.require_estimate_effort_to_review,
             'require_can_be_split_review': get_settings().pr_reviewer.require_can_be_split_review,
+            'require_security_review': get_settings().pr_reviewer.require_security_review,
             'num_code_suggestions': get_settings().pr_reviewer.num_code_suggestions,
             'question_str': question_str,
             'answer_str': answer_str,
@@ -124,7 +127,7 @@ class PRReviewer:
             if get_settings().config.publish_output:
                 self.git_provider.publish_comment("Preparing review...", is_temporary=True)
 
-            await retry_with_fallback_models(self._prepare_prediction, model_type=ModelType.TURBO)
+            await retry_with_fallback_models(self._prepare_prediction)
             if not self.prediction:
                 self.git_provider.remove_initial_comment()
                 return None
@@ -221,7 +224,6 @@ class PRReviewer:
                     else:
                         pass
 
-
         incremental_review_markdown_text = None
         # Add incremental review section
         if self.incremental.is_incremental:
@@ -237,6 +239,10 @@ class PRReviewer:
             markdown_text += "<hr>\n\n<details> <summary><strong>💡 Tool usage guide:</strong></summary><hr> \n\n"
             markdown_text += HelpMessage.get_review_usage_guide()
             markdown_text += "\n</details>\n"
+
+        # Output the relevant configurations if enabled
+        if get_settings().get('config', {}).get('output_relevant_configurations', False):
+            markdown_text += show_relevant_configurations(relevant_section='pr_reviewer')
 
         # Add custom labels from the review prediction (effort, security)
         self.set_review_labels(data)
@@ -273,7 +279,7 @@ class PRReviewer:
                 self.git_provider.publish_inline_comment(content, relevant_file, relevant_line_in_file)
 
         if comments:
-                self.git_provider.publish_inline_comments(comments)
+            self.git_provider.publish_inline_comments(comments)
 
     def _get_user_answers(self) -> Tuple[str, str]:
         """
@@ -368,10 +374,10 @@ class PRReviewer:
                 if get_settings().pr_reviewer.enable_review_labels_effort:
                     estimated_effort = data['review']['estimated_effort_to_review_[1-5]']
                     estimated_effort_number = int(estimated_effort.split(',')[0])
-                    if 1 <= estimated_effort_number <= 5: # 1, because ...
+                    if 1 <= estimated_effort_number <= 5:  # 1, because ...
                         review_labels.append(f'Review effort [1-5]: {estimated_effort_number}')
-                if get_settings().pr_reviewer.enable_review_labels_security:
-                    security_concerns = data['review']['security_concerns'] # yes, because ...
+                if get_settings().pr_reviewer.enable_review_labels_security and get_settings().pr_reviewer.require_security_review:
+                    security_concerns = data['review']['security_concerns']  # yes, because ...
                     security_concerns_bool = 'yes' in security_concerns.lower() or 'true' in security_concerns.lower()
                     if security_concerns_bool:
                         review_labels.append('Possible security concern')

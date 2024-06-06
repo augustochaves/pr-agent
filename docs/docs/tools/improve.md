@@ -87,6 +87,18 @@ Hence, the total number of suggestions is proportional to the number of chunks, 
     <td>If set to true, the improve comment will be persistent, meaning that every new improve request will edit the previous one. Default is false.</td>
   </tr>
   <tr>
+    <td><b>self_reflect_on_suggestions</b></td>
+    <td>If set to true, the improve tool will calculate an importance score for each suggestion [1-10], and sort the suggestion labels group based on this score. Default is true.</td>
+  </tr>
+  <tr>
+    <td><b>suggestions_score_threshold</b></td>
+    <td> Any suggestion with importance score less than this threshold will be removed. Default is 0. Highly recommend not to set this value above 7-8, since above it may clip relevant suggestions that can be useful. </td>
+  </tr>
+  <tr>
+    <td><b>apply_suggestions_checkbox</b></td>
+    <td> Enable the checkbox to create a committable suggestion. Default is true.</td>
+  </tr>
+  <tr>
     <td><b>enable_help_text</b></td>
     <td>If set to true, the tool will display a help text in the comment. Default is true.</td>
   </tr>
@@ -156,4 +168,4 @@ Hence, the total number of suggestions is proportional to the number of chunks, 
 
 In addition, we recommend to use the `exra_instructions` field to guide the model to suggestions that are more relevant to the specific needs of the project. 
 <br>
-Consider also trying the [Custom Suggestions Tool](./custom_suggestions.md) 💎, that will **only** propose suggestions that follow specific guidelines defined by user.
+Consider also trying the [Custom Prompt Tool](./custom_prompt.md) 💎, that will **only** propose code suggestions that follow specific guidelines defined by user.
