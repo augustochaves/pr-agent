@@ -11,18 +11,19 @@ from pr_agent.algo.pr_processing import get_pr_diff, get_pr_multi_diffs, retry_w
 from pr_agent.algo.token_handler import TokenHandler
 from pr_agent.algo.utils import load_yaml, replace_code_tags, ModelType, show_relevant_configurations
 from pr_agent.config_loader import get_settings
-from pr_agent.git_providers import get_git_provider
+from pr_agent.git_providers import get_git_provider, get_git_provider_with_context
 from pr_agent.git_providers.git_provider import get_main_pr_language
 from pr_agent.log import get_logger
 from pr_agent.servers.help import HelpMessage
 from pr_agent.tools.pr_description import insert_br_after_x_chars
 import difflib
 
+
 class PRCodeSuggestions:
     def __init__(self, pr_url: str, cli_mode=False, args: list = None,
                  ai_handler: partial[BaseAiHandler,] = LiteLLMAIHandler):
 
-        self.git_provider = get_git_provider()(pr_url)
+        self.git_provider = get_git_provider_with_context(pr_url)
         self.main_language = get_main_pr_language(
             self.git_provider.get_languages(), self.git_provider.get_files()
         )
@@ -75,7 +76,8 @@ class PRCodeSuggestions:
             relevant_configs = {'pr_code_suggestions': dict(get_settings().pr_code_suggestions),
                                 'config': dict(get_settings().config)}
             get_logger().debug("Relevant configs", artifacts=relevant_configs)
-            if get_settings().config.publish_output and get_settings().config.publish_output_progress:
+            if (get_settings().config.publish_output and get_settings().config.publish_output_progress and
+                    not get_settings().config.get('is_auto_command', False)):
                 if self.git_provider.is_supported("gfm_markdown"):
                     self.progress_response = self.git_provider.publish_comment(self.progress)
                 else:
@@ -111,6 +113,13 @@ class PRCodeSuggestions:
                     # generate summarized suggestions
                     pr_body = self.generate_summarized_suggestions(data)
                     get_logger().debug(f"PR output", artifact=pr_body)
+
+                    # require self-review
+                    if get_settings().pr_code_suggestions.demand_code_suggestions_self_review:
+                        text= get_settings().pr_code_suggestions.code_suggestions_self_review_text
+                        pr_body += f"\n\n- [ ]  {text}"
+                        if get_settings().pr_code_suggestions.approve_pr_on_self_review:
+                            pr_body += ' <!-- approve pr self-review -->'
 
                     # add usage guide
                     if get_settings().pr_code_suggestions.enable_help_text:

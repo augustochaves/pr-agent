@@ -11,7 +11,7 @@ from pr_agent.algo.token_handler import TokenHandler
 from pr_agent.algo.utils import convert_to_markdown, github_action_output, load_yaml, ModelType, \
     show_relevant_configurations
 from pr_agent.config_loader import get_settings
-from pr_agent.git_providers import get_git_provider
+from pr_agent.git_providers import get_git_provider, get_git_provider_with_context
 from pr_agent.git_providers.git_provider import IncrementalPR, get_main_pr_language
 from pr_agent.log import get_logger
 from pr_agent.servers.help import HelpMessage
@@ -34,10 +34,12 @@ class PRReviewer:
             ai_handler (BaseAiHandler): The AI handler to be used for the review. Defaults to None.
             args (list, optional): List of arguments passed to the PRReviewer class. Defaults to None.
         """
+        self.git_provider = get_git_provider_with_context(pr_url)
         self.args = args
-        self.parse_args(args)  # -i command
+        self.incremental = self.parse_incremental(args)  # -i command
+        if self.incremental and self.incremental.is_incremental:
+            self.git_provider.get_incremental_commits(self.incremental)
 
-        self.git_provider = get_git_provider()(pr_url, incremental=self.incremental)
         self.main_language = get_main_pr_language(
             self.git_provider.get_languages(), self.git_provider.get_files()
         )
@@ -82,22 +84,14 @@ class PRReviewer:
             get_settings().pr_review_prompt.user
         )
 
-    def parse_args(self, args: List[str]) -> None:
-        """
-        Parse the arguments passed to the PRReviewer class and set the 'incremental' attribute accordingly.
-
-        Args:
-            args: A list of arguments passed to the PRReviewer class.
-
-        Returns:
-            None
-        """
+    def parse_incremental(self, args: List[str]):
         is_incremental = False
         if args and len(args) >= 1:
             arg = args[0]
             if arg == "-i":
                 is_incremental = True
-        self.incremental = IncrementalPR(is_incremental)
+        incremental = IncrementalPR(is_incremental)
+        return incremental
 
     async def run(self) -> None:
         try:
@@ -124,7 +118,7 @@ class PRReviewer:
                                     f"No files were changed since the [previous PR Review]({previous_review_url})")
                 return None
 
-            if get_settings().config.publish_output:
+            if get_settings().config.publish_output and not get_settings().config.get('is_auto_command', False):
                 self.git_provider.publish_comment("Preparing review...", is_temporary=True)
 
             await retry_with_fallback_models(self._prepare_prediction)
@@ -140,7 +134,7 @@ class PRReviewer:
                 if get_settings().pr_reviewer.persistent_comment and not self.incremental.is_incremental:
                     final_update_message = get_settings().pr_reviewer.final_update_message
                     self.git_provider.publish_persistent_comment(pr_review,
-                                                                 initial_header="## PR Review 🔍",
+                                                                 initial_header="## PR Reviewer Guide 🔍",
                                                                  update_header=True,
                                                                  final_update_message=final_update_message, )
                 else:
@@ -193,9 +187,14 @@ class PRReviewer:
         the feedback.
         """
         data = load_yaml(self.prediction.strip(),
-                         keys_fix_yaml=["estimated_effort_to_review_[1-5]:", "security_concerns:", "possible_issues:",
+                         keys_fix_yaml=["estimated_effort_to_review_[1-5]:", "security_concerns:", "key_issues_to_review:",
                                         "relevant_file:", "relevant_line:", "suggestion:"])
         github_action_output(data, 'review')
+
+        # move data['review'] 'key_issues_to_review' key to the end of the dictionary
+        if 'key_issues_to_review' in data['review']:
+            key_issues_to_review = data['review'].pop('key_issues_to_review')
+            data['review']['key_issues_to_review'] = key_issues_to_review
 
         if 'code_feedback' in data:
             code_feedback = data['code_feedback']
@@ -260,7 +259,7 @@ class PRReviewer:
             return
 
         data = load_yaml(self.prediction.strip(),
-                         keys_fix_yaml=["estimated_effort_to_review_[1-5]:", "security_concerns:", "possible_issues:",
+                         keys_fix_yaml=["estimated_effort_to_review_[1-5]:", "security_concerns:", "key_issues_to_review:",
                                         "relevant_file:", "relevant_line:", "suggestion:"])
         comments: List[str] = []
         for suggestion in data.get('code_feedback', []):
