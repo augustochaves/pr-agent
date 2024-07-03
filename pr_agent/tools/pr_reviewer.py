@@ -8,8 +8,8 @@ from pr_agent.algo.ai_handlers.base_ai_handler import BaseAiHandler
 from pr_agent.algo.ai_handlers.litellm_ai_handler import LiteLLMAIHandler
 from pr_agent.algo.pr_processing import get_pr_diff, retry_with_fallback_models
 from pr_agent.algo.token_handler import TokenHandler
-from pr_agent.algo.utils import convert_to_markdown, github_action_output, load_yaml, ModelType, \
-    show_relevant_configurations
+from pr_agent.algo.utils import github_action_output, load_yaml, ModelType, \
+    show_relevant_configurations, convert_to_markdown_v2, PRReviewHeader
 from pr_agent.config_loader import get_settings
 from pr_agent.git_providers import get_git_provider, get_git_provider_with_context
 from pr_agent.git_providers.git_provider import IncrementalPR, get_main_pr_language
@@ -134,7 +134,7 @@ class PRReviewer:
                 if get_settings().pr_reviewer.persistent_comment and not self.incremental.is_incremental:
                     final_update_message = get_settings().pr_reviewer.final_update_message
                     self.git_provider.publish_persistent_comment(pr_review,
-                                                                 initial_header="## PR Reviewer Guide 🔍",
+                                                                 initial_header=f"{PRReviewHeader.REGULAR.value} 🔍",
                                                                  update_header=True,
                                                                  final_update_message=final_update_message, )
                 else:
@@ -230,7 +230,7 @@ class PRReviewer:
                               f"{self.git_provider.incremental.first_new_commit_sha}"
             incremental_review_markdown_text = f"Starting from commit {last_commit_url}"
 
-        markdown_text = convert_to_markdown(data, self.git_provider.is_supported("gfm_markdown"),
+        markdown_text = convert_to_markdown_v2(data, self.git_provider.is_supported("gfm_markdown"),
                                             incremental_review_markdown_text)
 
         # Add help text if gfm_markdown is supported
