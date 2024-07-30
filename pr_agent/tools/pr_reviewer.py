@@ -75,6 +75,7 @@ class PRReviewer:
             "commit_messages_str": self.git_provider.get_commit_messages(),
             "custom_labels": "",
             "enable_custom_labels": get_settings().config.enable_custom_labels,
+            "extra_issue_links": get_settings().pr_reviewer.extra_issue_links,
         }
 
         self.token_handler = TokenHandler(
@@ -147,7 +148,12 @@ class PRReviewer:
             get_logger().error(f"Failed to review PR: {e}")
 
     async def _prepare_prediction(self, model: str) -> None:
-        self.patches_diff = get_pr_diff(self.git_provider, self.token_handler, model)
+        self.patches_diff = get_pr_diff(self.git_provider,
+                                        self.token_handler,
+                                        model,
+                                        add_line_numbers_to_hunks=True,
+                                        disable_extra_lines=True,)
+
         if self.patches_diff:
             get_logger().debug(f"PR diff", diff=self.patches_diff)
             self.prediction = await self._get_prediction(model)
@@ -174,7 +180,7 @@ class PRReviewer:
 
         response, finish_reason = await self.ai_handler.chat_completion(
             model=model,
-            temperature=0.2,
+            temperature=get_settings().config.temperature,
             system=system_prompt,
             user=user_prompt
         )
@@ -186,9 +192,12 @@ class PRReviewer:
         Prepare the PR review by processing the AI prediction and generating a markdown-formatted text that summarizes
         the feedback.
         """
+        first_key = 'review'
+        last_key = 'security_concerns'
         data = load_yaml(self.prediction.strip(),
                          keys_fix_yaml=["estimated_effort_to_review_[1-5]:", "security_concerns:", "key_issues_to_review:",
-                                        "relevant_file:", "relevant_line:", "suggestion:"])
+                                        "relevant_file:", "relevant_line:", "suggestion:"],
+                         first_key=first_key, last_key=last_key)
         github_action_output(data, 'review')
 
         # move data['review'] 'key_issues_to_review' key to the end of the dictionary
@@ -231,7 +240,7 @@ class PRReviewer:
             incremental_review_markdown_text = f"Starting from commit {last_commit_url}"
 
         markdown_text = convert_to_markdown_v2(data, self.git_provider.is_supported("gfm_markdown"),
-                                            incremental_review_markdown_text)
+                                            incremental_review_markdown_text, git_provider=self.git_provider)
 
         # Add help text if gfm_markdown is supported
         if self.git_provider.is_supported("gfm_markdown") and get_settings().pr_reviewer.enable_help_text:
@@ -258,9 +267,12 @@ class PRReviewer:
         if get_settings().pr_reviewer.num_code_suggestions == 0:
             return
 
+        first_key = 'review'
+        last_key = 'security_concerns'
         data = load_yaml(self.prediction.strip(),
                          keys_fix_yaml=["estimated_effort_to_review_[1-5]:", "security_concerns:", "key_issues_to_review:",
-                                        "relevant_file:", "relevant_line:", "suggestion:"])
+                                        "relevant_file:", "relevant_line:", "suggestion:"],
+                         first_key=first_key, last_key=last_key)
         comments: List[str] = []
         for suggestion in data.get('code_feedback', []):
             relevant_file = suggestion.get('relevant_file', '').strip()

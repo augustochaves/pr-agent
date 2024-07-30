@@ -69,6 +69,8 @@ class LocalGitProvider(GitProvider):
             R=True
         )
 
+        diffs = [diff_item for diff_item in diffs if diff_item.b_path != 'bin/uptime/uptime.js']
+        diffs = [diff_item for diff_item in diffs if diff_item.b_path != 'pnpm-lock.yaml']
         diffs = [diff_item for diff_item in diffs if diff_item.b_path != 'bun.lockb']
         diffs = [diff_item for diff_item in diffs if diff_item.b_path is None or 'generated' not in diff_item.b_path]
 
@@ -79,7 +81,7 @@ class LocalGitProvider(GitProvider):
             else:
                 original_file_content_str = ""  # empty file
             if diff_item.b_blob is not None:
-                new_file_content_str = diff_item.b_blob.data_stream.read().decode('utf-8')
+                new_file_content_str = diff_item.b_blob.data_stream.read().decode('utf-8', errors='replace')
             else:
                 new_file_content_str = ""  # empty file
             edit_type = EDIT_TYPE.MODIFIED
@@ -219,4 +221,3 @@ class LocalGitProvider(GitProvider):
             return contents
         except OSError:
             return b""
-

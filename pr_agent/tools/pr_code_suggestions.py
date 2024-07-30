@@ -11,12 +11,14 @@ from pr_agent.algo.pr_processing import get_pr_diff, get_pr_multi_diffs, retry_w
 from pr_agent.algo.token_handler import TokenHandler
 from pr_agent.algo.utils import load_yaml, replace_code_tags, ModelType, show_relevant_configurations
 from pr_agent.config_loader import get_settings
-from pr_agent.git_providers import get_git_provider, get_git_provider_with_context, GithubProvider, GitLabProvider
+from pr_agent.git_providers import get_git_provider, get_git_provider_with_context, GithubProvider, GitLabProvider, \
+    AzureDevopsProvider
 from pr_agent.git_providers.git_provider import get_main_pr_language
 from pr_agent.log import get_logger
 from pr_agent.servers.help import HelpMessage
 from pr_agent.tools.pr_description import insert_br_after_x_chars
 import difflib
+import re
 
 
 class PRCodeSuggestions:
@@ -33,6 +35,7 @@ class PRCodeSuggestions:
             MAX_CONTEXT_TOKENS_IMPROVE = get_settings().pr_code_suggestions.max_context_tokens
             if get_settings().config.max_model_tokens > MAX_CONTEXT_TOKENS_IMPROVE:
                 get_logger().info(f"Setting max_model_tokens to {MAX_CONTEXT_TOKENS_IMPROVE} for PR improve")
+                get_settings().config.max_model_tokens_original = get_settings().config.max_model_tokens
                 get_settings().config.max_model_tokens = MAX_CONTEXT_TOKENS_IMPROVE
 
         # extended mode
@@ -59,10 +62,17 @@ class PRCodeSuggestions:
             "num_code_suggestions": num_code_suggestions,
             "extra_instructions": get_settings().pr_code_suggestions.extra_instructions,
             "commit_messages_str": self.git_provider.get_commit_messages(),
+            "relevant_best_practices": "",
         }
+        if 'claude' in get_settings().config.model:
+            # prompt for Claude, with minor adjustments
+            self.pr_code_suggestions_prompt_system = get_settings().pr_code_suggestions_prompt_claude.system
+        else:
+            self.pr_code_suggestions_prompt_system = get_settings().pr_code_suggestions_prompt.system
+
         self.token_handler = TokenHandler(self.git_provider.pr,
                                           self.vars,
-                                          get_settings().pr_code_suggestions_prompt.system,
+                                          self.pr_code_suggestions_prompt_system,
                                           get_settings().pr_code_suggestions_prompt.user)
 
         self.progress = f"## Generating PR code suggestions\n\n"
@@ -90,8 +100,8 @@ class PRCodeSuggestions:
                 data = {"code_suggestions": []}
 
             if data is None or 'code_suggestions' not in data or not data['code_suggestions']:
-                get_logger().error('No code suggestions found for PR.')
-                pr_body = "## PR Code Suggestions ✨\n\nNo code suggestions found for PR."
+                get_logger().error('No code suggestions found for the PR.')
+                pr_body = "## PR Code Suggestions ✨\n\nNo code suggestions found for the PR."
                 get_logger().debug(f"PR output", artifact=pr_body)
                 if self.progress_response:
                     self.git_provider.edit_comment(self.progress_response, body=pr_body)
@@ -132,15 +142,14 @@ class PRCodeSuggestions:
 
                     if get_settings().pr_code_suggestions.persistent_comment:
                         final_update_message = False
-                        self.git_provider.publish_persistent_comment(pr_body,
+                        self.publish_persistent_comment_with_history(pr_body,
                                                                      initial_header="## PR Code Suggestions ✨",
                                                                      update_header=True,
                                                                      name="suggestions",
-                                                                     final_update_message=final_update_message, )
-                        if self.progress_response:
-                            self.progress_response.delete()
+                                                                     final_update_message=final_update_message,
+                                                                     max_previous_comments=get_settings().pr_code_suggestions.max_history_len,
+                                                                     progress_response=self.progress_response)
                     else:
-
                         if self.progress_response:
                             self.git_provider.edit_comment(self.progress_response, body=pr_body)
                         else:
@@ -160,6 +169,117 @@ class PRCodeSuggestions:
                     self.git_provider.publish_comment(f"Failed to generate code suggestions for PR")
                 except Exception as e:
                     pass
+
+    def publish_persistent_comment_with_history(self, pr_comment: str,
+                                                initial_header: str,
+                                                update_header: bool = True,
+                                                name='review',
+                                                final_update_message=True,
+                                                max_previous_comments=4,
+                                                progress_response=None):
+        if isinstance(self.git_provider, AzureDevopsProvider): # get_latest_commit_url is not supported yet
+            if progress_response:
+                self.git_provider.edit_comment(progress_response, pr_comment)
+            else:
+                self.git_provider.publish_comment(pr_comment)
+            return
+
+        history_header = f"#### Previous suggestions\n"
+        last_commit_num = self.git_provider.get_latest_commit_url().split('/')[-1][:7]
+        latest_suggestion_header = f"Latest suggestions up to {last_commit_num}"
+        latest_commit_html_comment = f"<!-- {last_commit_num} -->"
+        found_comment = None
+
+        if max_previous_comments > 0:
+            try:
+                prev_comments = list(self.git_provider.get_issue_comments())
+                for comment in prev_comments:
+                    if comment.body.startswith(initial_header):
+                        prev_suggestions = comment.body
+                        found_comment = comment
+                        comment_url = self.git_provider.get_comment_url(comment)
+
+                        if history_header.strip() not in comment.body:
+                            # no history section
+                            # extract everything between <table> and </table> in comment.body including <table> and </table>
+                            table_index = comment.body.find("<table>")
+                            if table_index == -1:
+                                self.git_provider.edit_comment(comment, pr_comment)
+                                continue
+                            # find http link from comment.body[:table_index]
+                            up_to_commit_txt = self.extract_link(comment.body[:table_index])
+                            prev_suggestion_table = comment.body[
+                                                    table_index:comment.body.rfind("</table>") + len("</table>")]
+
+                            tick = "✅ " if "✅" in prev_suggestion_table else ""
+                            # surround with details tag
+                            prev_suggestion_table = f"<details><summary>{tick}{name.capitalize()}{up_to_commit_txt}</summary>\n<br>{prev_suggestion_table}\n\n</details>"
+
+                            new_suggestion_table = pr_comment.replace(initial_header, "").strip()
+
+                            pr_comment_updated = f"{initial_header}\n{latest_commit_html_comment}\n\n"
+                            pr_comment_updated += f"{latest_suggestion_header}\n{new_suggestion_table}\n\n___\n\n"
+                            pr_comment_updated += f"{history_header}{prev_suggestion_table}\n"
+                        else:
+                            # get the text of the previous suggestions until the latest commit
+                            sections = prev_suggestions.split(history_header.strip())
+                            latest_table = sections[0].strip()
+                            prev_suggestion_table = sections[1].replace(history_header, "").strip()
+
+                            # get text after the latest_suggestion_header in comment.body
+                            table_ind = latest_table.find("<table>")
+                            up_to_commit_txt = self.extract_link(latest_table[:table_ind])
+
+                            latest_table = latest_table[table_ind:latest_table.rfind("</table>") + len("</table>")]
+                            # enforce max_previous_comments
+                            count = prev_suggestions.count(f"\n<details><summary>{name.capitalize()}")
+                            count += prev_suggestions.count(f"\n<details><summary>✅ {name.capitalize()}")
+                            if count >= max_previous_comments:
+                                # remove the oldest suggestion
+                                prev_suggestion_table = prev_suggestion_table[:prev_suggestion_table.rfind(
+                                    f"<details><summary>{name.capitalize()} up to commit")]
+
+                            tick = "✅ " if "✅" in latest_table else ""
+                            # Add to the prev_suggestions section
+                            last_prev_table = f"\n<details><summary>{tick}{name.capitalize()}{up_to_commit_txt}</summary>\n<br>{latest_table}\n\n</details>"
+                            prev_suggestion_table = last_prev_table + "\n" + prev_suggestion_table
+
+                            new_suggestion_table = pr_comment.replace(initial_header, "").strip()
+
+                            pr_comment_updated = f"{initial_header}\n"
+                            pr_comment_updated += f"{latest_commit_html_comment}\n\n"
+                            pr_comment_updated += f"{latest_suggestion_header}\n\n{new_suggestion_table}\n\n"
+                            pr_comment_updated += "___\n\n"
+                            pr_comment_updated += f"{history_header}\n"
+                            pr_comment_updated += f"{prev_suggestion_table}\n"
+
+                        get_logger().info(f"Persistent mode - updating comment {comment_url} to latest {name} message")
+                        if progress_response:  # publish to 'progress_response' comment, because it refreshes immediately
+                            self.git_provider.edit_comment(progress_response, pr_comment_updated)
+                            self.git_provider.delete_comment(comment)
+                        else:
+                            self.git_provider.edit_comment(comment, pr_comment_updated)
+                        return
+            except Exception as e:
+                get_logger().exception(f"Failed to update persistent review, error: {e}")
+                pass
+
+        # if we are here, we did not find a previous comment to update
+        body = pr_comment.replace(initial_header, "").strip()
+        pr_comment = f"{initial_header}\n\n{latest_commit_html_comment}\n\n{body}\n\n"
+        if progress_response:
+            self.git_provider.edit_comment(progress_response, pr_comment)
+        else:
+            self.git_provider.publish_comment(pr_comment)
+
+    def extract_link(self, s):
+        r = re.compile(r"<!--.*?-->")
+        match = r.search(s)
+
+        up_to_commit_txt = ""
+        if match:
+            up_to_commit_txt = f" up to commit {match.group(0)[4:-3].strip()}"
+        return up_to_commit_txt
 
     async def _prepare_prediction(self, model: str) -> dict:
         self.patches_diff = get_pr_diff(self.git_provider,
@@ -182,19 +302,19 @@ class PRCodeSuggestions:
         variables = copy.deepcopy(self.vars)
         variables["diff"] = patches_diff  # update diff
         environment = Environment(undefined=StrictUndefined)
-        system_prompt = environment.from_string(get_settings().pr_code_suggestions_prompt.system).render(variables)
+        system_prompt = environment.from_string(self.pr_code_suggestions_prompt_system).render(variables)
         user_prompt = environment.from_string(get_settings().pr_code_suggestions_prompt.user).render(variables)
-        response, finish_reason = await self.ai_handler.chat_completion(model=model, temperature=0.2,
-                                                                        system=system_prompt, user=user_prompt)
+        response, finish_reason = await self.ai_handler.chat_completion(
+            model=model, temperature=get_settings().config.temperature, system=system_prompt, user=user_prompt)
 
         # load suggestions from the AI response
         data = self._prepare_pr_code_suggestions(response)
 
         # self-reflect on suggestions
         if get_settings().pr_code_suggestions.self_reflect_on_suggestions:
-            model = get_settings().config.model_turbo  # use turbo model for self-reflection, since it is an easier task
-            response_reflect = await self.self_reflect_on_suggestions(data["code_suggestions"], patches_diff,
-                                                                      model=model)
+            model_turbo = get_settings().config.model_turbo  # use turbo model for self-reflection, since it is an easier task
+            response_reflect = await self.self_reflect_on_suggestions(data["code_suggestions"],
+                                                                      patches_diff, model=model_turbo)
             if response_reflect:
                 response_reflect_yaml = load_yaml(response_reflect)
                 code_suggestions_feedback = response_reflect_yaml["code_suggestions"]
@@ -231,7 +351,8 @@ class PRCodeSuggestions:
 
     def _prepare_pr_code_suggestions(self, predictions: str) -> Dict:
         data = load_yaml(predictions.strip(),
-                         keys_fix_yaml=["relevant_file", "suggestion_content", "existing_code", "improved_code"])
+                         keys_fix_yaml=["relevant_file", "suggestion_content", "existing_code", "improved_code"],
+                         first_key="code_suggestions", last_key="label")
         if isinstance(data, list):
             data = {'code_suggestions': data}
 
@@ -311,7 +432,8 @@ class PRCodeSuggestions:
                     body = f"**Suggestion:** {content} [{label}]\n```suggestion\n" + new_code_snippet + "\n```"
                 code_suggestions.append({'body': body, 'relevant_file': relevant_file,
                                          'relevant_lines_start': relevant_lines_start,
-                                         'relevant_lines_end': relevant_lines_end})
+                                         'relevant_lines_end': relevant_lines_end,
+                                         'original_suggestion': d})
             except Exception:
                 get_logger().info(f"Could not parse suggestion: {d}")
 
@@ -349,7 +471,7 @@ class PRCodeSuggestions:
             get_logger().info("Extended mode is enabled by the `--extended` flag")
             return True
         if get_settings().pr_code_suggestions.auto_extended_mode:
-            get_logger().info("Extended mode is enabled automatically based on the configuration toggle")
+            # get_logger().info("Extended mode is enabled automatically based on the configuration toggle")
             return True
         return False
 
@@ -515,9 +637,9 @@ class PRCodeSuggestions:
                         code_snippet_link = ""
                     # add html table for each suggestion
 
-                    suggestion_content = suggestion['suggestion_content'].rstrip().rstrip()
-
-                    suggestion_content = insert_br_after_x_chars(suggestion_content, 90)
+                    suggestion_content = suggestion['suggestion_content'].rstrip()
+                    CHAR_LIMIT_PER_LINE = 84
+                    suggestion_content = insert_br_after_x_chars(suggestion_content, CHAR_LIMIT_PER_LINE)
                     # pr_body += f"<tr><td><details><summary>{suggestion_content}</summary>"
                     existing_code = suggestion['existing_code'].rstrip() + "\n"
                     improved_code = suggestion['improved_code'].rstrip() + "\n"

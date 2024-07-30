@@ -1,19 +1,25 @@
 [config]
+# models
 model="gpt-4-turbo-2024-04-09"
 model_turbo="gpt-4o"
 fallback_models=["gpt-4-0125-preview"]
+# CLI
 git_provider="local"
 publish_output=true
 publish_output_progress=true
 verbosity_level=0 # 0,1,2
 use_extra_bad_extensions=false
+# Configurations
 use_wiki_settings_file=true
 use_repo_settings_file=true
 use_global_settings_file=true
 ai_timeout=120 # 2minutes
+# token limits
 max_description_tokens = 500
 max_commits_tokens = 500
 max_model_tokens = 32000 # Limits the maximum number of tokens that can be used by any model, regardless of the model's default capabilities.
+custom_model_max_tokens=-1 # for models not in the default list
+#
 patch_extra_lines = 1
 secret_provider=""
 cli_mode=false
@@ -22,6 +28,9 @@ ai_disclaimer=""  # Pro feature, full text for the AI disclaimer
 output_relevant_configurations=false
 large_patch_policy = "clip" # "clip", "skip"
 is_auto_command=false
+# seed
+seed=-1 # set positive value to fix the seed (and ensure temperature=0)
+temperature=0.2
 
 [pr_reviewer] # /review #
 # enable/disable features
@@ -30,6 +39,7 @@ require_tests_review=true
 require_estimate_effort_to_review=true
 require_can_be_split_review=false
 require_security_review=true
+extra_issue_links=false
 # soc2
 require_soc2_ticket=false
 soc2_ticket_prompt="Does the PR description include a link to ticket in a project management system (e.g., Jira, Asana, Trello, etc.) ?"
@@ -92,7 +102,8 @@ commitable_code_suggestions = false
 extra_instructions = ""
 rank_suggestions = false
 enable_help_text=false
-persistent_comment=false
+persistent_comment=true
+max_history_len=4
 # enable to apply suggestion 💎
 apply_suggestions_checkbox=true
 # suggestions scoring
@@ -204,14 +215,7 @@ ignore_pr_title = []
 ignore_bot_pr = true
 
 [gitlab]
-# URL to the gitlab service
 url = "https://gitlab.com"
-# Polling (either project id or namespace/project_name) syntax can be used
-projects_to_monitor = ['org_name/repo_name']
-# Polling trigger
-magic_word = "AutoReview"
-# Polling interval
-polling_interval_seconds = 30
 pr_commands = [
     "/describe",
     "/review --pr_reviewer.num_code_suggestions=0",
@@ -249,6 +253,11 @@ pr_commands = [
 # URL to the BitBucket Server instance
 # url = "https://git.bitbucket.com"
 url = ""
+pr_commands = [
+    "/describe",
+    "/review --pr_reviewer.num_code_suggestions=0",
+    "/improve --pr_code_suggestions.commitable_code_suggestions=true --pr_code_suggestions.suggestions_score_threshold=7",
+]
 
 [litellm]
 # use_client = false
@@ -275,3 +284,7 @@ number_of_results = 5
 
 [lancedb]
 uri = "./lancedb"
+
+[best_practices]
+content = ""
+max_lines_allowed = 800

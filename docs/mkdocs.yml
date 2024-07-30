@@ -18,10 +18,12 @@ nav:
   - Usage Guide:
     - 'usage-guide/index.md'
     - Introduction: 'usage-guide/introduction.md'
-    - Configuration Options: 'usage-guide/configuration_options.md'
-    - Managing Mail Notifications: 'usage-guide/mail_notifications.md'
+    - Configuration File: 'usage-guide/configuration_options.md'
     - Usage and Automation: 'usage-guide/automations_and_usage.md'
+    - Managing Mail Notifications: 'usage-guide/mail_notifications.md'
+    - Changing a Model: 'usage-guide/changing_a_model.md'
     - Additional Configurations: 'usage-guide/additional_configurations.md'
+    - 💎 PR-Agent Pro Models: 'usage-guide/PR_agent_pro_models'
   - Tools:
     - 'tools/index.md'
     - Describe: 'tools/describe.md'
@@ -131,7 +133,7 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - toc:
       title: On this page
-      toc_depth: 2
+      toc_depth: 3
       permalink: true
 
 
