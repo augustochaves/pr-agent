@@ -182,7 +182,7 @@ class GitProvider(ABC):
 
 
     @abstractmethod
-    def publish_inline_comment(self, body: str, relevant_file: str, relevant_line_in_file: str):
+    def publish_inline_comment(self, body: str, relevant_file: str, relevant_line_in_file: str, original_suggestion=None):
         pass
 
     def create_inline_comment(self, body: str, relevant_file: str, relevant_line_in_file: str,
@@ -207,9 +207,6 @@ class GitProvider(ABC):
 
     def get_comment_url(self, comment) -> str:
         return ""
-
-    def delete_comment(self, comment):
-        comment.delete()
 
     #### labels operations ####
     @abstractmethod
@@ -255,6 +252,9 @@ class GitProvider(ABC):
             return len(self.get_diff_files())
         except Exception as e:
             return -1
+
+    def limit_output_characters(self, output: str, max_chars: int):
+        return output[:max_chars] + '...' if len(output) > max_chars else output
 
 
 def get_main_pr_language(languages, files) -> str:
@@ -324,6 +324,8 @@ def get_main_pr_language(languages, files) -> str:
         pass
 
     return main_language_str
+
+
 
 
 class IncrementalPR:

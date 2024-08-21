@@ -1,8 +1,8 @@
 [config]
 # models
 model="gpt-4-turbo-2024-04-09"
-model_turbo="gpt-4o"
-fallback_models=["gpt-4-0125-preview"]
+model_turbo="gpt-4o-2024-08-06"
+fallback_models=["gpt-4o-2024-05-13"]
 # CLI
 git_provider="local"
 publish_output=true
@@ -19,8 +19,12 @@ max_description_tokens = 500
 max_commits_tokens = 500
 max_model_tokens = 32000 # Limits the maximum number of tokens that can be used by any model, regardless of the model's default capabilities.
 custom_model_max_tokens=-1 # for models not in the default list
-#
-patch_extra_lines = 1
+# patch extension logic
+patch_extension_skip_types =[".md",".txt"]
+allow_dynamic_context=false
+max_extra_lines_before_dynamic_context = 10 # will try to include up to 10 extra lines before the hunk in the patch, until we reach an enclosing function or class
+patch_extra_lines_before = 3 # Number of extra lines (+3 default ones) to include before each hunk in the patch
+patch_extra_lines_after = 1 # Number of extra lines (+3 default ones) to include after each hunk in the patch
 secret_provider=""
 cli_mode=false
 ai_disclaimer_title=""  # Pro feature, title for a collapsible disclaimer to AI outputs
@@ -96,7 +100,7 @@ enable_help_text=false
 
 
 [pr_code_suggestions] # /improve #
-max_context_tokens=10000
+max_context_tokens=14000
 num_code_suggestions=4
 commitable_code_suggestions = false
 extra_instructions = ""
@@ -217,7 +221,7 @@ ignore_bot_pr = true
 [gitlab]
 url = "https://gitlab.com"
 pr_commands = [
-    "/describe",
+    "/describe --pr_description.final_update_message=false",
     "/review --pr_reviewer.num_code_suggestions=0",
     "/improve",
 ]
@@ -229,6 +233,7 @@ push_commands = [
 
 [bitbucket_app]
 pr_commands = [
+    "/describe --pr_description.final_update_message=false",
     "/review --pr_reviewer.num_code_suggestions=0",
     "/improve --pr_code_suggestions.commitable_code_suggestions=true --pr_code_suggestions.suggestions_score_threshold=7",
 ]
@@ -254,7 +259,7 @@ pr_commands = [
 # url = "https://git.bitbucket.com"
 url = ""
 pr_commands = [
-    "/describe",
+    "/describe --pr_description.final_update_message=false",
     "/review --pr_reviewer.num_code_suggestions=0",
     "/improve --pr_code_suggestions.commitable_code_suggestions=true --pr_code_suggestions.suggestions_score_threshold=7",
 ]

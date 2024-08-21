@@ -96,6 +96,10 @@ class PRReviewer:
 
     async def run(self) -> None:
         try:
+            if not self.git_provider.get_files():
+                get_logger().info(f"PR has no files: {self.pr_url}, skipping review")
+                return None
+
             if self.incremental.is_incremental and not self._can_run_incremental_review():
                 return None
 
@@ -158,7 +162,7 @@ class PRReviewer:
             get_logger().debug(f"PR diff", diff=self.patches_diff)
             self.prediction = await self._get_prediction(model)
         else:
-            get_logger().error(f"Error getting PR diff")
+            get_logger().warning(f"Empty diff for PR: {self.pr_url}")
             self.prediction = None
 
     async def _get_prediction(self, model: str) -> str:
@@ -287,7 +291,7 @@ class PRReviewer:
                 if comment:
                     comments.append(comment)
             else:
-                self.git_provider.publish_inline_comment(content, relevant_file, relevant_line_in_file)
+                self.git_provider.publish_inline_comment(content, relevant_file, relevant_line_in_file, suggestion)
 
         if comments:
             self.git_provider.publish_inline_comments(comments)
@@ -377,6 +381,11 @@ class PRReviewer:
     def set_review_labels(self, data):
         if not get_settings().config.publish_output:
             return
+
+        if not get_settings().pr_reviewer.require_estimate_effort_to_review:
+            get_settings().pr_reviewer.enable_review_labels_effort = False # we did not generate this output
+        if not get_settings().pr_reviewer.require_security_review:
+            get_settings().pr_reviewer.enable_review_labels_security = False # we did not generate this output
 
         if (get_settings().pr_reviewer.enable_review_labels_security or
                 get_settings().pr_reviewer.enable_review_labels_effort):
