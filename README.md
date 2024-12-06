@@ -10,26 +10,24 @@
 
 </picture>
 <br/>
-CodiumAI PR-Agent aims to help efficiently review and handle pull requests, by providing AI feedback and suggestions
+Qode Merge PR-Agent aims to help efficiently review and handle pull requests, by providing AI feedback and suggestions
 </div>
 
-[![GitHub license](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/Codium-ai/pr-agent/blob/main/LICENSE)
 [![Static Badge](https://img.shields.io/badge/Chrome-Extension-violet)](https://chromewebstore.google.com/detail/pr-agent-chrome-extension/ephlnjeghhogofkifjloamocljapahnl)
-[![Static Badge](https://img.shields.io/badge/Code-Benchmark-blue)](https://pr-agent-docs.codium.ai/finetuning_benchmark/)
+[![Static Badge](https://img.shields.io/badge/Pro-App-blue)](https://github.com/apps/qodo-merge-pro/)
+[![Static Badge](https://img.shields.io/badge/OpenSource-App-red)](https://github.com/apps/qodo-merge-pro-for-open-source/)
 [![Discord](https://badgen.net/badge/icon/discord?icon=discord&label&color=purple)](https://discord.com/channels/1057273017547378788/1126104260430528613)
-[![Twitter](https://img.shields.io/twitter/follow/codiumai)](https://twitter.com/codiumai)
-[![Cheat Sheet](https://img.shields.io/badge/Cheat-Sheet-red)](https://www.codium.ai/images/pr_agent/cheat_sheet.pdf)
-    <a href="https://github.com/Codium-ai/pr-agent/commits/main">
-    <img alt="GitHub" src="https://img.shields.io/github/last-commit/Codium-ai/pr-agent/main?style=for-the-badge" height="20">
-    </a>
+<a href="https://github.com/Codium-ai/pr-agent/commits/main">
+<img alt="GitHub" src="https://img.shields.io/github/last-commit/Codium-ai/pr-agent/main?style=for-the-badge" height="20">
+</a>
 </div>
 
 ### [Documentation](https://pr-agent-docs.codium.ai/)
-- See the [Installation Guide](https://pr-agent-docs.codium.ai/installation/) for instructions on installing PR-Agent on different platforms.
+- See the [Installation Guide](https://qodo-merge-docs.qodo.ai/installation/) for instructions on installing Qode Merge PR-Agent on different platforms.
 
-- See the [Usage Guide](https://pr-agent-docs.codium.ai/usage-guide/) for instructions on running PR-Agent tools via different interfaces, such as CLI, PR Comments, or by automatically triggering them when a new PR is opened.
+- See the [Usage Guide](https://qodo-merge-docs.qodo.ai/usage-guide/) for instructions on running Qode Merge PR-Agent tools via different interfaces, such as CLI, PR Comments, or by automatically triggering them when a new PR is opened.
 
-- See the [Tools Guide](https://pr-agent-docs.codium.ai/tools/) for a detailed description of the different tools, and the available configurations for each tool.
+- See the [Tools Guide](https://qodo-merge-docs.qodo.ai/tools/) for a detailed description of the different tools, and the available configurations for each tool.
 
 
 ## Table of Contents
@@ -37,36 +35,46 @@ CodiumAI PR-Agent aims to help efficiently review and handle pull requests, by p
 - [Overview](#overview)
 - [Example results](#example-results)
 - [Try it now](#try-it-now)
-- [PR-Agent Pro 💎](#pr-agent-pro-)
+- [PR-Agent Pro 💎](https://pr-agent-docs.codium.ai/overview/pr_agent_pro/)
 - [How it works](#how-it-works)
 - [Why use PR-Agent?](#why-use-pr-agent)
-  
+
 ## News and Updates
 
-### August 11, 2024
-Increased PR context size for improved results, and enabled [asymmetric context](https://github.com/Codium-ai/pr-agent/pull/1114/files#diff-9290a3ad9a86690b31f0450b77acd37ef1914b41fabc8a08682d4da433a77f90R69-R70)
+### December 2, 2024
 
-### August 10, 2024
-Added support for [Azure devops pipeline](https://pr-agent-docs.codium.ai/installation/azure/) - you can now easily run PR-Agent as an Azure devops pipeline, without needing to set up your own server.
+Open-source repositories can now freely use Qodo Merge Pro, and enjoy easy one-click installation using a marketplace [app](https://github.com/apps/qodo-merge-pro-for-open-source).
+
+<kbd><img src="https://github.com/user-attachments/assets/b0838724-87b9-43b0-ab62-73739a3a855c" width="512"></kbd>
+
+See [here](https://qodo-merge-docs.qodo.ai/installation/pr_agent_pro/) for more details about installing Qodo Merge Pro for private repositories.
 
 
-### August 5, 2024
-Added support for [GitLab pipeline](https://pr-agent-docs.codium.ai/installation/gitlab/#run-as-a-gitlab-pipeline) - you can now run easily PR-Agent as a GitLab pipeline, without needing to set up your own server.
+### November 18, 2024
 
-### July 28, 2024
+A new mode was enabled by default for code suggestions - `--pr_code_suggestions.focus_only_on_problems=true`:
 
-(1) improved support for bitbucket server - [auto commands](https://github.com/Codium-ai/pr-agent/pull/1059) and [direct links](https://github.com/Codium-ai/pr-agent/pull/1061)
+- This option reduces the number of code suggestions received
+- The suggestions will focus more on identifying and fixing code problems, rather than style considerations like best practices, maintainability, or readability.
+- The suggestions will be categorized into just two groups: "Possible Issues" and "General".
 
-(2) custom models are now [supported](https://pr-agent-docs.codium.ai/usage-guide/changing_a_model/#custom-models)
+Still, if you prefer the previous mode, you can set `--pr_code_suggestions.focus_only_on_problems=false` in the [configuration file](https://qodo-merge-docs.qodo.ai/usage-guide/configuration_options/).
 
-### July 6, 2024
+**Example results:**
 
-v0.23 has been released. See full log changes [here](https://github.com/Codium-ai/pr-agent/releases/tag/v0.23).
+Original mode
 
-### July 4, 2024
+<kbd><img src="https://qodo.ai/images/pr_agent/code_suggestions_original_mode.png" width="512"></kbd>
 
-Added improved support for claude-sonnet-3.5 model (anthropic, vertex, bedrock), including dedicated prompts.
+Focused mode
 
+<kbd><img src="https://qodo.ai/images/pr_agent/code_suggestions_focused_mode.png" width="512"></kbd>
+
+
+### November 4, 2024
+
+Qodo Merge PR Agent will now leverage context from Jira or GitHub tickets to enhance the PR Feedback. Read more about this feature 
+[here](https://qodo-merge-docs.qodo.ai/core-abilities/fetching_ticket_context/)
 
 
 ## Overview
@@ -78,7 +86,6 @@ Supported commands per platform:
 |-------|---------------------------------------------------------------------------------------------------------|:--------------------:|:--------------------:|:--------------------:|:------------:|
 | TOOLS | Review                                                                                                  | ✅ | ✅ | ✅ |      ✅       |
 |       | ⮑ Incremental                                                                                           | ✅ |                    |                    |              |
-|       | ⮑ [SOC2 Compliance](https://pr-agent-docs.codium.ai/tools/review/#soc2-ticket-compliance) 💎            | ✅ | ✅ | ✅ |              |
 |       | Describe                                                                                                | ✅ | ✅ | ✅ |      ✅       |
 |       | ⮑ [Inline File Summary](https://pr-agent-docs.codium.ai/tools/describe#inline-file-summary) 💎          | ✅ |                    |                    |              |
 |       | Improve                                                                                                 | ✅ | ✅ | ✅ |      ✅       |
@@ -246,8 +253,8 @@ Note that when you set your own PR-Agent or use CodiumAI hosted PR-Agent, there 
 1. **Fully managed** - We take care of everything for you - hosting, models, regular updates, and more. Installation is as simple as signing up and adding the PR-Agent app to your GitHub\GitLab\BitBucket repo.
 2. **Improved privacy** - No data will be stored or used to train models. PR-Agent Pro will employ zero data retention, and will use an OpenAI account with zero data retention.
 3. **Improved support** - PR-Agent Pro users will receive priority support, and will be able to request new features and capabilities.
-4. **Extra features** -In addition to the benefits listed above, PR-Agent Pro will emphasize more customization, and the usage of static code analysis, in addition to LLM logic, to improve results. 
-See [here](https://pr-agent-docs.codium.ai/#pr-agent-pro) for a list of features available in PR-Agent Pro.
+4. **Extra features** -In addition to the benefits listed above, PR-Agent Pro will emphasize more customization, and the usage of static code analysis, in addition to LLM logic, to improve results.
+See [here](https://qodo-merge-docs.qodo.ai/overview/pr_agent_pro/) for a list of features available in PR-Agent Pro.
 
 
 

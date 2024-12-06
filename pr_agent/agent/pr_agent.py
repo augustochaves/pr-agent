@@ -3,7 +3,6 @@ from functools import partial
 
 from pr_agent.algo.ai_handlers.base_ai_handler import BaseAiHandler
 from pr_agent.algo.ai_handlers.litellm_ai_handler import LiteLLMAIHandler
-
 from pr_agent.algo.utils import update_settings_from_args
 from pr_agent.config_loader import get_settings
 from pr_agent.git_providers.utils import apply_repo_settings
@@ -79,7 +78,7 @@ class PRAgent:
         if action not in command2class:
             get_logger().debug(f"Unknown command: {action}")
             return False
-        with get_logger().contextualize(command=action):
+        with get_logger().contextualize(command=action, pr_url=pr_url):
             get_logger().info("PR-Agent request handler started", analytics=True)
             if action == "reflect_and_review":
                 get_settings().pr_reviewer.ask_and_reflect = True

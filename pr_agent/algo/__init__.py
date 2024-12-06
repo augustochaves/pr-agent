@@ -19,6 +19,11 @@ MAX_TOKENS = {
     'gpt-4o-mini': 128000,  # 128K, but may be limited by config.max_model_tokens
     'gpt-4o-mini-2024-07-18': 128000,  # 128K, but may be limited by config.max_model_tokens
     'gpt-4o-2024-08-06': 128000,  # 128K, but may be limited by config.max_model_tokens
+    'gpt-4o-2024-11-20': 128000,  # 128K, but may be limited by config.max_model_tokens
+    'o1-mini': 128000,  # 128K, but may be limited by config.max_model_tokens
+    'o1-mini-2024-09-12': 128000,  # 128K, but may be limited by config.max_model_tokens
+    'o1-preview': 128000,  # 128K, but may be limited by config.max_model_tokens
+    'o1-preview-2024-09-12': 128000,  # 128K, but may be limited by config.max_model_tokens
     'claude-instant-1': 100000,
     'claude-2': 100000,
     'command-nightly': 4096,
@@ -27,12 +32,16 @@ MAX_TOKENS = {
     'vertex_ai/codechat-bison': 6144,
     'vertex_ai/codechat-bison-32k': 32000,
     'vertex_ai/claude-3-haiku@20240307': 100000,
+    'vertex_ai/claude-3-5-haiku@20241022': 100000,
     'vertex_ai/claude-3-sonnet@20240229': 100000,
     'vertex_ai/claude-3-opus@20240229': 100000,
     'vertex_ai/claude-3-5-sonnet@20240620': 100000,
+    'vertex_ai/claude-3-5-sonnet-v2@20241022': 100000,
     'vertex_ai/gemini-1.5-pro': 1048576,
     'vertex_ai/gemini-1.5-flash': 1048576,
     'vertex_ai/gemma2': 8200,
+    'gemini/gemini-1.5-pro': 1048576,
+    'gemini/gemini-1.5-flash': 1048576,
     'codechat-bison': 6144,
     'codechat-bison-32k': 32000,
     'anthropic.claude-instant-v1': 100000,
@@ -40,12 +49,16 @@ MAX_TOKENS = {
     'anthropic.claude-v2': 100000,
     'anthropic/claude-3-opus-20240229': 100000,
     'anthropic/claude-3-5-sonnet-20240620': 100000,
+    'anthropic/claude-3-5-sonnet-20241022': 100000,
+    'anthropic/claude-3-5-haiku-20241022': 100000,
     'bedrock/anthropic.claude-instant-v1': 100000,
     'bedrock/anthropic.claude-v2': 100000,
     'bedrock/anthropic.claude-v2:1': 100000,
     'bedrock/anthropic.claude-3-sonnet-20240229-v1:0': 100000,
     'bedrock/anthropic.claude-3-haiku-20240307-v1:0': 100000,
+    'bedrock/anthropic.claude-3-5-haiku-20241022-v1:0': 100000,
     'bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0': 100000,
+    'bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0': 100000,
     'claude-3-5-sonnet': 100000,
     'groq/llama3-8b-8192': 8192,
     'groq/llama3-70b-8192': 8192,
