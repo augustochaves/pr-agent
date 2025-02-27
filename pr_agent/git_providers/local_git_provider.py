@@ -72,6 +72,8 @@ class LocalGitProvider(GitProvider):
         diffs = [diff_item for diff_item in diffs if diff_item.b_path != 'bin/uptime/uptime.js']
         diffs = [diff_item for diff_item in diffs if diff_item.b_path != 'pnpm-lock.yaml']
         diffs = [diff_item for diff_item in diffs if diff_item.b_path != 'bun.lockb']
+        diffs = [diff_item for diff_item in diffs if diff_item.b_path != 'ios/Podfile.lock']
+        diffs = [diff_item for diff_item in diffs if diff_item.b_path != 'ios/leko.xcodeproj/project.pbxproj']
         diffs = [diff_item for diff_item in diffs if diff_item.b_path is None or 'generated' not in diff_item.b_path]
 
         diff_files = []
