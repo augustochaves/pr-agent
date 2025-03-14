@@ -60,6 +60,7 @@ MAX_TOKENS = {
     'anthropic/claude-3-5-sonnet-20240620': 100000,
     'anthropic/claude-3-5-sonnet-20241022': 100000,
     'anthropic/claude-3-7-sonnet-20250219': 200000,
+    'claude-3-7-sonnet-20250219': 200000,
     'anthropic/claude-3-5-haiku-20241022': 100000,
     'bedrock/anthropic.claude-instant-v1': 100000,
     'bedrock/anthropic.claude-v2': 100000,
@@ -71,6 +72,7 @@ MAX_TOKENS = {
     'bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0': 100000,
     'bedrock/anthropic.claude-3-7-sonnet-20250219-v1:0': 200000,
     "bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0": 100000,
+    "bedrock/us.anthropic.claude-3-7-sonnet-20250219-v1:0": 200000,
     'claude-3-5-sonnet': 100000,
     'groq/llama3-8b-8192': 8192,
     'groq/llama3-70b-8192': 8192,
@@ -85,6 +87,9 @@ MAX_TOKENS = {
     "watsonx/ibm/granite-13b-chat-v2": 8191,
     "watsonx/ibm/granite-34b-code-instruct": 8191,
     "watsonx/mistralai/mistral-large": 32768,
+    "deepinfra/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": 128000,
+    "deepinfra/deepseek-ai/DeepSeek-R1-Distill-Llama-70B": 128000,
+    "deepinfra/deepseek-ai/DeepSeek-R1": 128000,
 }
 
 USER_MESSAGE_ONLY_MODELS = [
@@ -103,4 +108,14 @@ NO_SUPPORT_TEMPERATURE_MODELS = [
     "o3-mini",
     "o3-mini-2025-01-31",
     "o1-preview"
+]
+
+SUPPORT_REASONING_EFFORT_MODELS = [
+    "o3-mini",
+    "o3-mini-2025-01-31"
+]
+
+CLAUDE_EXTENDED_THINKING_MODELS = [
+    "anthropic/claude-3-7-sonnet-20250219",
+    "claude-3-7-sonnet-20250219"
 ]
