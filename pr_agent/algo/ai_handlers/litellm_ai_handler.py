@@ -59,6 +59,7 @@ class LiteLLMAIHandler(BaseAiHandler):
             litellm.api_version = get_settings().openai.api_version
         if get_settings().get("OPENAI.API_BASE", None):
             litellm.api_base = get_settings().openai.api_base
+            self.api_base = get_settings().openai.api_base
         if get_settings().get("ANTHROPIC.KEY", None):
             litellm.anthropic_key = get_settings().anthropic.key
         if get_settings().get("COHERE.KEY", None):
@@ -117,6 +118,18 @@ class LiteLLMAIHandler(BaseAiHandler):
             self.api_base = get_settings().azure_ad.api_base
             litellm.api_base = self.api_base
             openai.api_base = self.api_base
+
+        # Support for Openrouter models
+        if get_settings().get("OPENROUTER.KEY", None):
+            openrouter_api_key = get_settings().get("OPENROUTER.KEY", None)
+            os.environ["OPENROUTER_API_KEY"] = openrouter_api_key
+            litellm.api_key = openrouter_api_key
+            openai.api_key = openrouter_api_key
+
+            openrouter_api_base = get_settings().get("OPENROUTER.API_BASE", "https://openrouter.ai/api/v1")
+            os.environ["OPENROUTER_API_BASE"] = openrouter_api_base
+            self.api_base = openrouter_api_base
+            litellm.api_base = openrouter_api_base
 
         # Models that only use user meessage
         self.user_message_only_models = USER_MESSAGE_ONLY_MODELS
@@ -358,11 +371,11 @@ class LiteLLMAIHandler(BaseAiHandler):
                 get_logger().info(f"\nUser prompt:\n{user}")
 
             response = await acompletion(**kwargs)
-        except (openai.APIError, openai.APITimeoutError) as e:
-            get_logger().warning(f"Error during LLM inference: {e}")
-            raise
         except (openai.RateLimitError) as e:
             get_logger().error(f"Rate limit error during LLM inference: {e}")
+            raise
+        except (openai.APIError, openai.APITimeoutError) as e:
+            get_logger().warning(f"Error during LLM inference: {e}")
             raise
         except (Exception) as e:
             get_logger().warning(f"Unknown error during LLM inference: {e}")
