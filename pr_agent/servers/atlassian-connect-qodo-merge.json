@@ -1,10 +1,10 @@
 {
-  "name": "CodiumAI PR-Agent",
-  "description": "CodiumAI PR-Agent",
+  "name": "Qodo Merge",
+  "description": "Qodo Merge",
   "key": "app_key",
   "vendor": {
-    "name": "CodiumAI",
-    "url": "https://codium.ai"
+    "name": "Qodo",
+    "url": "https://qodo.ai"
   },
   "authentication": {
     "type": "jwt"

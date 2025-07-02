@@ -39,7 +39,7 @@ allow_dynamic_context=true
 max_extra_lines_before_dynamic_context = 10 # will try to include up to 10 extra lines before the hunk in the patch, until we reach an enclosing function or class
 patch_extra_lines_before = 5 # Number of extra lines (+3 default ones) to include before each hunk in the patch
 patch_extra_lines_after = 1 # Number of extra lines (+3 default ones) to include after each hunk in the patch
-secret_provider=""
+secret_provider="" # "" (disabled), "google_cloud_storage", or "aws_secrets_manager" for secure secret management
 cli_mode=false
 ai_disclaimer_title=""  # Pro feature, title for a collapsible disclaimer to AI outputs
 ai_disclaimer=""  # Pro feature, full text for the AI disclaimer
@@ -56,6 +56,7 @@ ignore_pr_source_branches = [] # a list of regular expressions of source branche
 ignore_pr_labels = [] # labels to ignore from PR agent when an PR is created
 ignore_pr_authors = [] # authors to ignore from PR agent when an PR is created
 ignore_repositories = [] # a list of regular expressions of repository full names (e.g. "org/repo") to ignore from PR agent processing
+ignore_language_framework = [] # a list of code-generation languages or frameworks (e.g. 'protobuf', 'go_gen') whose auto-generated source files will be excluded from analysis
 #
 is_auto_command = false # will be auto-set to true if the command is triggered by an automation
 enable_ai_metadata = false # will enable adding ai metadata
@@ -78,8 +79,10 @@ require_tests_review=true
 require_estimate_effort_to_review=true
 require_can_be_split_review=false
 require_security_review=true
+require_todo_scan=false
 require_ticket_analysis_review=true
 # general options
+publish_output_no_suggestions=true # Set to "false" if you only need the reviewer's remarks (not labels, not "security audit", etc.) and want to avoid noisy "No major issues detected" comments.
 persistent_comment=true
 extra_instructions = ""
 num_max_findings = 3
@@ -104,7 +107,7 @@ enable_pr_type=true
 final_update_message = true
 enable_help_text=false
 enable_help_comment=true
-enable_pr_diagram=false # adds a section with a diagram of the PR changes
+enable_pr_diagram=true # adds a section with a diagram of the PR changes
 # describe as comment
 publish_description_as_comment=false
 publish_description_as_comment_persistent=true

@@ -56,24 +56,31 @@ Everything below this marker is treated as previously auto-generated content and
 
 ![Describe comment](https://codium.ai/images/pr_agent/pr_description_user_description.png){width=512}
 
-### Sequence Diagram Support 
-When the `enable_pr_diagram` option is enabled in your configuration, the `/describe` tool will include a `Mermaid` sequence diagram in the PR description.
+## Sequence Diagram Support 
+The `/describe` tool includes a Mermaid sequence diagram showing component/function interactions. 
 
-This diagram represents interactions between components/functions based on the diff content.
+This option is enabled by default via the `pr_description.enable_pr_diagram` param.
 
-### How to enable
 
-In your configuration:
+[//]: # (### How to enable\disable)
 
-```
-toml
-[pr_description]
-enable_pr_diagram = true
-```
+[//]: # ()
+[//]: # (In your configuration:)
+
+[//]: # ()
+[//]: # (```)
+
+[//]: # (toml)
+
+[//]: # ([pr_description])
+
+[//]: # (enable_pr_diagram = true)
+
+[//]: # (```)
 
 ## Configuration options
 
-!!! example "Possible configurations"
+???+ example "Possible configurations"
 
     <table>
       <tr>
@@ -117,8 +124,8 @@ enable_pr_diagram = true
         <td>If set to true, the file list in the "Changes walkthrough" section will be collapsible. If set to "adaptive", the file list will be collapsible only if there are more than 8 files. Default is "adaptive".</td>
       </tr>
       <tr>
-        <td><b>enable_large_pr_handling</b></td>
-        <td>Pro feature. If set to true, in case of a large PR the tool will make several calls to the AI and combine them to be able to cover more files. Default is true.</td>
+        <td><b>enable_large_pr_handling 💎</b></td>
+        <td>If set to true, in case of a large PR the tool will make several calls to the AI and combine them to be able to cover more files. Default is true.</td>
       </tr>
       <tr>
         <td><b>enable_help_text</b></td>
@@ -126,7 +133,7 @@ enable_pr_diagram = true
       </tr>
       <tr>
         <td><b>enable_pr_diagram</b></td>
-        <td>If set to true, the tool will generate a horizontal Mermaid flowchart summarizing the main pull request changes. This field remains empty if not applicable. Default is false.</td>
+        <td>If set to true, the tool will generate a horizontal Mermaid flowchart summarizing the main pull request changes. This field remains empty if not applicable. Default is true.</td>
       </tr>
     </table>
 
