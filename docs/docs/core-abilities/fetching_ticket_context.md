@@ -9,7 +9,7 @@ This integration enriches the review process by automatically surfacing relevant
 
 **Ticket systems supported**:
 
-- [GitHub](https://qodo-merge-docs.qodo.ai/core-abilities/fetching_ticket_context/#github-issues-integration)
+- [GitHub/Gitlab Issues](https://qodo-merge-docs.qodo.ai/core-abilities/fetching_ticket_context/#githubgitlab-issues-integration)
 - [Jira (💎)](https://qodo-merge-docs.qodo.ai/core-abilities/fetching_ticket_context/#jira-integration)
 - [Linear (💎)](https://qodo-merge-docs.qodo.ai/core-abilities/fetching_ticket_context/#linear-integration)
 
@@ -74,14 +74,17 @@ A `PR Code Verified` label indicates the PR code meets ticket requirements, but 
     
     the `review` tool will also validate that the PR code doesn't contain any additional content that is not related to the ticket. If it does, the PR will be labeled at best as `PR Code Verified`, and the `review` tool will provide a comment with the additional unrelated content found in the PR code.
 
-## GitHub Issues Integration
+## GitHub/Gitlab Issues Integration
 
-Qodo Merge will automatically recognize GitHub issues mentioned in the PR description and fetch the issue content.
-Examples of valid GitHub issue references:
+Qodo Merge will automatically recognize GitHub/Gitlab issues mentioned in the PR description and fetch the issue content.
+Examples of valid GitHub/Gitlab issue references:
 
-- `https://github.com/<ORG_NAME>/<REPO_NAME>/issues/<ISSUE_NUMBER>`
+- `https://github.com/<ORG_NAME>/<REPO_NAME>/issues/<ISSUE_NUMBER>` or `https://gitlab.com/<ORG_NAME>/<REPO_NAME>/-/issues/<ISSUE_NUMBER>`
 - `#<ISSUE_NUMBER>`
 - `<ORG_NAME>/<REPO_NAME>#<ISSUE_NUMBER>`
+
+Branch names can also be used to link issues, for example:
+- `123-fix-bug` (where `123` is the issue number)
 
 Since Qodo Merge is integrated with GitHub, it doesn't require any additional configuration to fetch GitHub issues.
 
@@ -104,7 +107,7 @@ Installation steps:
 2. Click on the Connect **Jira Cloud** button to connect the Jira Cloud app
 
 3. Click the `accept` button.<br>
-![Jira Cloud App Installation](https://www.qodo.ai/images/pr_agent/jira_app_installation1.png){width=384}
+![Jira Cloud App Installation](https://www.qodo.ai/images/pr_agent/jira_app_installation2.png){width=384}
 
 4. After installing the app, you will be redirected to the Qodo Merge registration page. and you will see a success message.<br>
 ![Jira Cloud App success message](https://www.qodo.ai/images/pr_agent/jira_app_success.png){width=384}

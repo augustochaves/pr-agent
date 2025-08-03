@@ -156,6 +156,7 @@ Qodo Merge supports both simple and hierarchical best practices configurations t
     - Keep each file relatively short, under 800 lines, since:
         - AI models may not process effectively very long documents
         - Long files tend to contain generic guidelines already known to AI
+        - Maximum multiple file accumulated content is limited to 2000 lines.
     - Use pattern-based structure rather than simple bullet points for better clarity
 
 ???- tip "Example of a best practices file"
@@ -226,26 +227,34 @@ For organizations managing multiple repositories with different requirements, Qo
 
    ```bash
    pr-agent-settings/
-   ├── metadata.yaml                     # Maps repos/folders to best practice paths
-   └── codebase_standards/               # Root for all best practice definitions
-       ├── global/                       # Global rules, inherited widely
+   ├── metadata.yaml                    # Maps repos/folders to best practice paths
+   └── codebase_standards/              # Root for all best practice definitions
+       ├── global/                      # Global rules, inherited widely
        │   └── best_practices.md
-       ├── groups/                       # For groups of repositories
+       ├── groups/                      # For groups of repositories
        │   ├── frontend_repos/
        │   │   └── best_practices.md
        │   ├── backend_repos/
        │   │   └── best_practices.md
-       │   └── ...
-       ├── qodo-merge/                   # For standalone repositories
-       │   └── best_practices.md
-       ├── qodo-monorepo/                # For monorepo-specific rules 
-       │   ├── best_practices.md         # Root level monorepo rules
-       │   ├── qodo-github/              # Subproject best practices
+       │   ├── python_repos/
        │   │   └── best_practices.md
-       │   └── qodo-gitlab/              # Another subproject
+       │   ├── cpp_repos/
+       │   │   └── best_practices.md
+       │   └── ...
+       ├── qodo-merge/                  # For standalone repositories
+       │   └── best_practices.md
+       ├── qodo-monorepo/               # For monorepo-specific rules 
+       │   ├── best_practices.md        # Root level monorepo rules
+       │   ├── qodo-github/             # Subproject best practices
+       │   │   └── best_practices.md
+       │   └── qodo-gitlab/             # Another subproject
        │       └── best_practices.md
-       └── ...                           # More repositories
+       └── ...                          # More repositories
    ```
+
+???+ tip "Grouping and categorizing best practices"
+    - Each folder (including the global folder) can contain a single `best_practices.md` file
+    - Organize repository best practices by creating subfolders within the `groups` folder. Group them by purpose, programming languages, or other categories
 
 3\. Define the metadata file `metadata.yaml` that maps your repositories to their relevant best practices paths, for example:
 
@@ -512,7 +521,7 @@ Qodo Merge uses a dynamic strategy to generate code suggestions based on the siz
 
 #### 2. Generating suggestions
 
-- For each chunk, Qodo Merge generates up to `pr_code_suggestions.num_code_suggestions_per_chunk` suggestions (default: 4).
+- For each chunk, Qodo Merge generates up to `pr_code_suggestions.num_code_suggestions_per_chunk` suggestions (default: 3).
 
 This approach has two main benefits:
 
@@ -568,7 +577,7 @@ Note: Chunking is primarily relevant for large PRs. For most PRs (up to 600 line
       </tr>
       <tr>
         <td><b>enable_help_text</b></td>
-        <td>If set to true, the tool will display a help text in the comment. Default is true.</td>
+        <td>If set to true, the tool will display a help text in the comment. Default is false.</td>
       </tr>
       <tr>
         <td><b>enable_chat_text</b></td>
@@ -597,6 +606,10 @@ Note: Chunking is primarily relevant for large PRs. For most PRs (up to 600 line
       <tr>
         <td><b>num_code_suggestions_per_chunk</b></td>
         <td>Number of code suggestions provided by the 'improve' tool, per chunk. Default is 3.</td>
+      </tr>
+      <tr>
+        <td><b>num_best_practice_suggestions 💎</b></td>
+        <td>Number of code suggestions provided by the 'improve' tool for best practices. Default is 1.</td>
       </tr>
       <tr>
         <td><b>max_number_of_calls</b></td>

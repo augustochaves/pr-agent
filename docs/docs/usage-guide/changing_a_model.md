@@ -32,6 +32,16 @@ OPENAI__API_BASE=https://api.openai.com/v1
 OPENAI__KEY=sk-...
 ```
 
+### OpenAI Flex Processing
+
+To reduce costs for non-urgent/background tasks, enable Flex Processing:
+
+```toml
+[litellm]
+extra_body='{"processing_mode": "flex"}'
+```
+
+See [OpenAI Flex Processing docs](https://platform.openai.com/docs/guides/flex-processing) for details.
 
 ### Azure
 
@@ -240,6 +250,26 @@ model="bedrock/us.meta.llama4-scout-17b-instruct-v1:0"
 fallback_models=["bedrock/us.meta.llama4-maverick-17b-instruct-v1:0"]
 ```
 
+#### Custom Inference Profiles
+
+To use a custom inference profile with Amazon Bedrock (for cost allocation tags and other configuration settings), add the `model_id` parameter to your configuration:
+
+```toml
+[config] # in configuration.toml
+model="bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0"
+fallback_models=["bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0"]
+
+[aws]
+AWS_ACCESS_KEY_ID="..."
+AWS_SECRET_ACCESS_KEY="..."
+AWS_REGION_NAME="..."
+
+[litellm]
+model_id = "your-custom-inference-profile-id"
+```
+
+The `model_id` parameter will be passed to all Bedrock completion calls, allowing you to use custom inference profiles for better cost allocation and reporting.
+
 See [litellm](https://docs.litellm.ai/docs/providers/bedrock#usage) documentation for more information about the environment variables required for Amazon Bedrock.
 
 ### DeepSeek
@@ -349,7 +379,7 @@ To bypass chat templates and temperature controls, set `config.custom_reasoning_
 
 ```toml
 [config]
-reasoning_efffort= = "medium" # "low", "medium", "high"
+reasoning_efffort = "medium" # "low", "medium", "high"
 ```
 
 With the OpenAI models that support reasoning effort (eg: o4-mini), you can specify its reasoning effort via `config` section. The default value is `medium`. You can change it to `high` or `low` based on your usage.
