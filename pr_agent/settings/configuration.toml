@@ -331,7 +331,7 @@ pr_commands = [
 
 [litellm]
 # use_client = false
-# drop_params = false
+drop_params = true
 enable_callbacks = false
 success_callback = []
 failure_callback = []
