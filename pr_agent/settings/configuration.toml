@@ -79,6 +79,7 @@ require_tests_review=true
 require_estimate_effort_to_review=true
 require_can_be_split_review=false
 require_security_review=true
+require_estimate_contribution_time_cost=false
 require_todo_scan=false
 require_ticket_analysis_review=true
 # general options
@@ -131,8 +132,6 @@ use_conversation_history=true
 
 
 [pr_code_suggestions] # /improve #
-max_context_tokens=24000
-#
 commitable_code_suggestions = false
 dual_publishing_score_threshold=-1 # -1 to disable, [0-10] to set the threshold (>=) for publishing a code suggestion both in a table and as commitable
 focus_only_on_problems=true
@@ -373,6 +372,8 @@ extra_instructions = "" # public - extra instructions to the auto best practices
 content = ""
 max_patterns = 5 # max number of patterns to be detected
 
+[azure_devops]
+default_comment_status = "closed"
 
 [azure_devops_server]
 pr_commands = [

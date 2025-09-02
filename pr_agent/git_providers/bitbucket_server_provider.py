@@ -38,10 +38,28 @@ class BitbucketServerProvider(GitProvider):
         self.diff_files = None
         self.bitbucket_pull_request_api_url = pr_url
         self.bearer_token = get_settings().get("BITBUCKET_SERVER.BEARER_TOKEN", None)
-        self.bitbucket_server_url = self._parse_bitbucket_server(url=pr_url)
-        self.bitbucket_client = bitbucket_client or Bitbucket(url=self.bitbucket_server_url,
-                                                              token=get_settings().get("BITBUCKET_SERVER.BEARER_TOKEN",
-                                                                                       None))
+        # Get username and password from settings
+        username = get_settings().get("BITBUCKET_SERVER.USERNAME", None)
+        password = get_settings().get("BITBUCKET_SERVER.PASSWORD", None)
+        if bitbucket_client: # if Bitbucket client is provided, use it
+            self.bitbucket_client = bitbucket_client
+            self.bitbucket_server_url = getattr(bitbucket_client, 'url', None) or self._parse_bitbucket_server(pr_url)
+        else:
+            self.bitbucket_server_url = self._parse_bitbucket_server(pr_url)
+            if not self.bitbucket_server_url:
+                raise ValueError("Invalid or missing Bitbucket Server URL parsed from PR URL.")
+            
+            if self.bearer_token:  # if bearer token is provided, use it
+                self.bitbucket_client = Bitbucket(
+                    url=self.bitbucket_server_url,
+                    token=self.bearer_token
+                )
+            else:  # otherwise use username and password
+                self.bitbucket_client = Bitbucket(
+                    url=self.bitbucket_server_url,
+                    username=username,
+                    password=password
+                )
         try:
             self.bitbucket_api_version = parse_version(self.bitbucket_client.get("rest/api/1.0/application-properties").get('version'))
         except Exception:
