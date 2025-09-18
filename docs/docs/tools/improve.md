@@ -42,8 +42,6 @@ For example, you can choose to present all the suggestions as committable code c
 
 ![improve](https://codium.ai/images/pr_agent/improve.png){width=512}
 
-As can be seen, a single table comment has a significantly smaller PR footprint. We recommend this mode for most cases.
-Also note that collapsible are not supported in _Bitbucket_. Hence, the suggestions can only be presented in Bitbucket as code comments.
 
 #### Manual more suggestions
 To generate more suggestions (distinct from the ones already generated), for git-providers that don't support interactive checkbox option, you can manually run:
@@ -70,6 +68,32 @@ num_code_suggestions_per_chunk = ...
 
 - The `pr_commands` lists commands that will be executed automatically when a PR is opened.
 - The `[pr_code_suggestions]` section contains the configurations for the `improve` tool you want to edit (if any)
+
+### Table vs Committable code comments
+
+Qodo Merge supports two modes for presenting code suggestions: 
+
+1) [Table](https://codium.ai/images/pr_agent/code_suggestions_as_comment_closed.png) mode 
+
+2) [Inline Committable](https://codium.ai/images/pr_agent/improve.png) code comments mode.
+
+The table format offers several key advantages:
+
+- **Reduced noise**: Creates a cleaner PR experience with less clutter
+- **Quick overview and prioritization**: Enables quick review of one-liner summaries, impact levels, and easy prioritization
+- **High-level suggestions**: High-level suggestions that aren't tied to specific code chunks are presented only in the table mode
+- **Interactive features**: Provides 'more' and 'update' functionality via clickable buttons
+- **Centralized tracking**: Shows suggestion implementation status in one place
+- **IDE integration**: Allows applying suggestions directly in your IDE via [Qodo Command](https://github.com/qodo-ai/agents)
+
+Table mode is the default of Qodo Merge, and is recommended approach for most users due to these benefits. 
+
+![code_suggestions_as_comment_closed.png](https://codium.ai/images/pr_agent/code_suggestions_as_comment_closed.png){width=512}
+
+Teams with specific preferences can enable committable code comments mode in their local configuration, or use [dual publishing mode](#dual-publishing-mode).
+
+> `Note - due to platform limitations, Bitbucket cloud and server supports only committable code comments mode.`
+
 
 ### Assessing Impact
 
